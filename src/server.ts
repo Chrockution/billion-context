@@ -1036,6 +1036,12 @@ export async function startServer(opts: ProxyOptions): Promise<http.Server> {
     // run — not just config shape (same-version stale dist kept serving after
     // a rebuild; different clients cross-wrote one shared proxy).
     const launcherLane = process.env.BILI_LAUNCHER_LANE?.trim() || undefined;
+    if (launcherLane !== undefined && launchToken === undefined) {
+        // #4368: user-declared lane on a manual daemon (bili start --lane or
+        // BILI_LAUNCHER_LANE) — announce it so an operator debugging why no
+        // client attaches can see the declared identity in the boot log.
+        log("info", `[start] declaring client lane "${launcherLane}" — same-lane hooks attach to this manual daemon instead of spawning their own (#4368)`);
+    }
     const ownFingerprint = entryScriptFingerprint(process.argv[1]);
     // #3801: our config shape EXACTLY as the registration below will record
     // it — the byte-stable pair for judging whether a contended-port holder
