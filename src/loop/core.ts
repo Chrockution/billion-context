@@ -36,7 +36,7 @@ import { formatUpstreamError, proxyDispatcher } from "../upstream-proxy.js";
 import { warnCacheCollapse } from "../cache-warn.js";
 import { dumpRejectedBody } from "../error-dump.js";
 import { shedEgressIfOverBudget } from "../egress-shed.js";
-import { bodyDumpEnabled as knobBodyDumpEnabled, imageRescaleMaxDim } from "../knobs.js";
+import { bodyDumpEnabled as knobBodyDumpEnabled, imageRescaleMaxDim, renderNone as knobRenderNone } from "../knobs.js";
 import { dumpsDir } from "../paths.js";
 import { isStrictReasoningEcho, modelIdOf, normalizeStrictEchoBody } from "../strict-echo.js";
 import { log as loggerLog } from "../logger.js";
@@ -509,7 +509,8 @@ export async function* runCompressLoop(
         const prevSentFull = ctx.session.transient?.sentBody?.full ?? null;
         // #3803: generation-parameter fingerprint from the full wire object (never the capped head) —
         // a host reasoning-effort / thinking-config flip re-partitions the provider cache namespace.
-        noteForwardedBody(ctx.session, wireBodyStr, wireArr !== undefined ? wireArr.length : null, credentialFingerprint(requestOptions.headers), generationParamFp(wireObj));
+        // #4397: stamp whether bili's render tags were active on THIS body (the #2483 suspect flag).
+        noteForwardedBody(ctx.session, wireBodyStr, wireArr !== undefined ? wireArr.length : null, credentialFingerprint(requestOptions.headers), generationParamFp(wireObj), !knobRenderNone());
         if (prevSentFull) {
             maybeJudgeContinuity(prevSentFull, wireBodyStr, ctx.protocol, ctx.session.id);
         }
